@@ -1,0 +1,102 @@
+name: H2 — MCP Swarm A/B Harness
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_count:
+        description: 'Number of issues to process (split evenly between arms)'
+        required: true
+        default: '20'
+        type: string
+      arm:
+        description: 'Which arm to run (both | monolith | swarm)'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - monolith
+          - swarm
+
+jobs:
+  run-ab-harness:
+    name: Run A/B Harness
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          pip install requests python-dateutil
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install and start Spec-MCP server
+        if: inputs.arm == 'swarm' || inputs.arm == 'both'
+        working-directory: h2-mcp-swarm/mcp/spec-mcp
+        run: |
+          npm install
+          npm run build
+          npm start &
+          echo "SPEC_MCP_PID=$!" >> $GITHUB_ENV
+          sleep 2
+        env:
+          SPEC_MCP_PORT: 3001
+
+      - name: Install and start Test-MCP server
+        if: inputs.arm == 'swarm' || inputs.arm == 'both'
+        working-directory: h2-mcp-swarm/mcp/test-mcp
+        run: |
+          npm install
+          npm run build
+          npm start &
+          echo "TEST_MCP_PID=$!" >> $GITHUB_ENV
+          sleep 2
+        env:
+          TEST_MCP_PORT: 3002
+
+      - name: Install and start Security-MCP server
+        if: inputs.arm == 'swarm' || inputs.arm == 'both'
+        working-directory: h2-mcp-swarm/mcp/security-mcp
+        run: |
+          npm install
+          npm run build
+          npm start &
+          echo "SECURITY_MCP_PID=$!" >> $GITHUB_ENV
+          sleep 2
+        env:
+          SECURITY_MCP_PORT: 3003
+
+      - name: Run A/B harness
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          python h2-mcp-swarm/harness/ab_runner.py \
+            --repo "$REPO" \
+            --issues ${{ inputs.issue_count }} \
+            --split $(( ${{ inputs.issue_count }} / 2 )) \
+            --arm ${{ inputs.arm }} \
+            --output h2-mcp-swarm/harness/results/run-$(date +%Y%m%d-%H%M%S).json
+
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add h2-mcp-swarm/harness/results/
+          git diff --staged --quiet || git commit -m "chore(h2): add A/B harness results [skip ci]"
+          git push

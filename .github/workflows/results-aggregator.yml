@@ -1,0 +1,234 @@
+name: Nightly Results Aggregator
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  aggregate-results:
+    name: Aggregate all experiment results into RESULTS.md
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests python-dateutil scipy numpy
+
+      - name: Aggregate H1 metrics
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          python h1-memory-flywheel/metrics/collect.py \
+            --repo "$REPO" \
+            --output h1-memory-flywheel/metrics/raw/latest.json \
+          || echo "H1 collection failed (no data yet)"
+
+      - name: Generate updated RESULTS.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          python - <<'PYEOF'
+          import json, pathlib, datetime, os, re
+
+          def read_json(path):
+              p = pathlib.Path(path)
+              if p.exists():
+                  return json.loads(p.read_text())
+              return {}
+
+          def load_h1_metrics():
+              data = read_json("h1-memory-flywheel/metrics/raw/latest.json")
+              if not data:
+                  return {}
+              return data
+
+          def load_h2_results():
+              results_dir = pathlib.Path("h2-mcp-swarm/harness/results")
+              all_results = []
+              for f in sorted(results_dir.glob("*.json")):
+                  all_results.extend(json.loads(f.read_text()))
+              return all_results
+
+          def load_h3_results():
+              raw_dir = pathlib.Path("h3-spaces-density/analysis/raw")
+              space_results = {}
+              for f in sorted(raw_dir.glob("*.json")):
+                  data = json.loads(f.read_text())
+                  for entry in data:
+                      space = entry.get("space", "unknown")
+                      if space not in space_results:
+                          space_results[space] = []
+                      space_results[space].append(entry)
+              return space_results
+
+          h1 = load_h1_metrics()
+          h2 = load_h2_results()
+          h3 = load_h3_results()
+
+          now = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+
+          # H1 summary
+          h1_prs = h1.get("total_prs", 0)
+          h1_treatment_rate = h1.get("treatment_acceptance_rate", None)
+          h1_control_rate = h1.get("control_acceptance_rate", None)
+          h1_delta = (
+              f"{(h1_treatment_rate - h1_control_rate) * 100:.1f}%"
+              if h1_treatment_rate is not None and h1_control_rate is not None
+              else "—"
+          )
+          h1_verdict = "Pending"
+
+          # H2 summary
+          monolith = [r for r in h2 if r.get("arm") == "monolith"]
+          swarm = [r for r in h2 if r.get("arm") == "swarm"]
+          h2_prs = len(h2)
+          h2_verdict = "Pending"
+
+          # H3 summary
+          h3_total = sum(len(v) for v in h3.values())
+          h3_verdict = "Pending"
+
+          spaces_order = ["0k", "2k", "8k", "32k", "128k", "max"]
+
+          lines = [
+              f"# RESULTS.md — Live Experiment Results",
+              f"",
+              f"> **Last updated:** {now}  ",
+              f"> Auto-updated by `.github/workflows/results-aggregator.yml` every night at 00:00 UTC.",
+              f"",
+              f"---",
+              f"",
+              f"## Summary Dashboard",
+              f"",
+              f"| Hypothesis | Status | PRs Collected | Current Δ | Verdict |",
+              f"|------------|--------|--------------|-----------|---------|",
+              f"| H1 — Memory Flywheel | 🟡 Running | {h1_prs} / 50 | {h1_delta} | {h1_verdict} |",
+              f"| H2 — MCP Swarm | 🟡 Running | {h2_prs} / 20 | — | {h2_verdict} |",
+              f"| H3 — Spaces Density | 🟡 Running | {h3_total} / 30 | — | {h3_verdict} |",
+              f"",
+              f"---",
+              f"",
+              f"## H1 — Compounding Memory Flywheel",
+              f"",
+              f"### Acceptance Rate Over Time",
+              f"",
+              f"| PR Milestone | Treatment (Memory ON) | Control (Memory OFF) | Δ |",
+              f"|-------------|----------------------|---------------------|---|",
+          ]
+
+          for milestone in [10, 20, 30, 40, 50]:
+              t = h1.get(f"treatment_rate_at_{milestone}", "—")
+              c = h1.get(f"control_rate_at_{milestone}", "—")
+              d = "—"
+              if isinstance(t, float) and isinstance(c, float):
+                  d = f"{(t - c) * 100:.1f}%"
+                  t = f"{t * 100:.1f}%"
+                  c = f"{c * 100:.1f}%"
+              lines.append(f"| n={milestone} | {t} | {c} | {d} |")
+
+          lines += [
+              f"",
+              f"### Secondary Metrics",
+              f"",
+              f"| Metric | Treatment | Control |",
+              f"|--------|-----------|---------|",
+              f"| Avg review comments / PR | {h1.get('treatment_avg_comments', '—')} | {h1.get('control_avg_comments', '—')} |",
+              f"| Median time-to-green CI (min) | {h1.get('treatment_ttg_min', '—')} | {h1.get('control_ttg_min', '—')} |",
+              f"| LESSON: blocks accumulated | {h1.get('lesson_count', 0)} | N/A |",
+              f"",
+              f"### H1 Verdict",
+              f"",
+              f"> **{h1_verdict}**",
+              f"",
+              f"---",
+              f"",
+              f"## H2 — MCP Swarm beats Monolith",
+              f"",
+              f"### Aggregate Comparison",
+              f"",
+              f"| Metric | Monolith | Swarm | Winner |",
+              f"|--------|----------|-------|--------|",
+          ]
+
+          def avg(items, key):
+              vals = [i.get(key) for i in items if i.get(key) is not None]
+              return f"{sum(vals)/len(vals):.2f}" if vals else "—"
+
+          lines += [
+              f"| Defect density | {avg(monolith, 'defects_72h')} | {avg(swarm, 'defects_72h')} | — |",
+              f"| Review pass rate | {avg(monolith, 'review_pass')} | {avg(swarm, 'review_pass')} | — |",
+              f"| Token cost / PR | {avg(monolith, 'token_cost')} | {avg(swarm, 'token_cost')} | — |",
+              f"| CI pass rate | {avg(monolith, 'ci_pass')} | {avg(swarm, 'ci_pass')} | — |",
+              f"",
+              f"### H2 Verdict",
+              f"",
+              f"> **{h2_verdict}**",
+              f"",
+              f"---",
+              f"",
+              f"## H3 — Spaces-as-Compiler: Context Density Curve",
+              f"",
+              f"### Per-Space Results (5 trials each)",
+              f"",
+              f"| Space | Context Tokens | Avg Tests Pass | Avg Lint Clean | Avg Review Approval | Avg Human Score | Avg Composite |",
+              f"|-------|---------------|---------------|----------------|--------------------|-----------------| --------------|",
+          ]
+
+          token_counts = {"0k": 0, "2k": 2000, "8k": 8000, "32k": 32000, "128k": 128000, "max": "TBD"}
+          for space in spaces_order:
+              entries = h3.get(space, [])
+              tc = token_counts.get(space, "TBD")
+              def space_avg(key):
+                  vals = [e.get("metrics", {}).get(key) for e in entries if e.get("metrics", {}).get(key) is not None]
+                  return f"{sum(vals)/len(vals):.2f}" if vals else "—"
+              lines.append(
+                  f"| {space} | {tc} | {space_avg('tests_pass')} | {space_avg('lint_clean')} | "
+                  f"{space_avg('review_approval')} | {space_avg('human_score')} | {space_avg('composite_quality')} |"
+              )
+
+          lines += [
+              f"",
+              f"### H3 Verdict",
+              f"",
+              f"> **{h3_verdict}**",
+              f"",
+              f"---",
+              f"",
+              f"## Raw Data",
+              f"",
+              f"Raw JSON data files are written to:",
+              f"- `h1-memory-flywheel/metrics/raw/`",
+              f"- `h2-mcp-swarm/harness/results/`",
+              f"- `h3-spaces-density/analysis/raw/`",
+              f"",
+              f"---",
+              f"",
+              f"_This file is machine-generated. Do not edit manually._",
+          ]
+
+          pathlib.Path("RESULTS.md").write_text("\n".join(lines) + "\n")
+          print("RESULTS.md updated successfully.")
+          PYEOF
+
+      - name: Commit updated RESULTS.md
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add RESULTS.md h1-memory-flywheel/metrics/raw/
+          git diff --staged --quiet || \
+            git commit -m "chore: nightly results aggregation $(date -u +%Y-%m-%d) [skip ci]"
+          git push
