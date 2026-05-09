@@ -1,0 +1,16 @@
+{
+  "name": "memory-writer-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for the H1 Memory Flywheel experiment",
+  "main": "append_lesson.ts",
+  "scripts": {
+    "append": "ts-node append_lesson.ts"
+  },
+  "dependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0"
+  }
+}

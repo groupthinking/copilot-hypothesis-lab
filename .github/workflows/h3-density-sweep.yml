@@ -1,0 +1,159 @@
+name: H3 — Spaces Density Sweep (6 Spaces × 5 trials)
+
+on:
+  workflow_dispatch:
+    inputs:
+      trials_per_space:
+        description: 'Number of trials per Space context level'
+        required: true
+        default: '5'
+        type: string
+      space_filter:
+        description: 'Comma-separated list of spaces to run (0k,2k,8k,32k,128k,max) or "all"'
+        required: true
+        default: 'all'
+        type: string
+  schedule:
+    # Run weekly on Mondays at 02:00 UTC during data collection phase
+    - cron: '0 2 * * 1'
+
+jobs:
+  density-sweep:
+    name: Run density sweep — ${{ matrix.space }} context
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        space: [0k, 2k, 8k, 32k, 128k, max]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check if this space is in the filter
+        id: filter
+        run: |
+          FILTER="${{ inputs.space_filter || 'all' }}"
+          SPACE="${{ matrix.space }}"
+          if [ "$FILTER" = "all" ] || echo "$FILTER" | grep -qw "$SPACE"; then
+            echo "run=true" >> $GITHUB_OUTPUT
+          else
+            echo "run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Python
+        if: steps.filter.outputs.run == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        if: steps.filter.outputs.run == 'true'
+        run: pip install requests python-dateutil scipy numpy
+
+      - name: Read space manifest
+        if: steps.filter.outputs.run == 'true'
+        id: manifest
+        run: |
+          MANIFEST="h3-spaces-density/spaces/${{ matrix.space }}.manifest.md"
+          echo "manifest_path=$MANIFEST" >> $GITHUB_OUTPUT
+          echo "Manifest: $MANIFEST"
+          cat "$MANIFEST"
+
+      - name: Run ${{ inputs.trials_per_space || '5' }} trials for ${{ matrix.space }} space
+        if: steps.filter.outputs.run == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SPACE: ${{ matrix.space }}
+          TRIALS: ${{ inputs.trials_per_space || '5' }}
+          TASK_SPEC: h3-spaces-density/task/oauth2_device_flow.md
+          MANIFEST: ${{ steps.manifest.outputs.manifest_path }}
+          RUBRIC: h3-spaces-density/rubric/score.md
+          OUTPUT_DIR: h3-spaces-density/analysis/raw
+        run: |
+          python - <<'EOF'
+          import os, json, datetime, pathlib, subprocess, sys
+
+          space = os.environ["SPACE"]
+          trials = int(os.environ["TRIALS"])
+          output_dir = pathlib.Path(os.environ["OUTPUT_DIR"])
+          output_dir.mkdir(parents=True, exist_ok=True)
+
+          results = []
+          for trial in range(1, trials + 1):
+              print(f"Space={space}, Trial={trial}/{trials}")
+              # In a real run this would invoke the cloud agent via the API.
+              # Here we record the trial metadata so the harness is in place.
+              result = {
+                  "space": space,
+                  "trial": trial,
+                  "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+                  "status": "scheduled",
+                  "metrics": {
+                      "tests_pass": None,
+                      "lint_clean": None,
+                      "review_approval": None,
+                      "human_score": None,
+                      "composite_quality": None
+                  }
+              }
+              results.append(result)
+
+          ts = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+          out_file = output_dir / f"{space}-{ts}.json"
+          out_file.write_text(json.dumps(results, indent=2))
+          print(f"Results written to {out_file}")
+          EOF
+
+      - name: Commit sweep results
+        if: steps.filter.outputs.run == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add h3-spaces-density/analysis/raw/
+          git diff --staged --quiet || \
+            git commit -m "chore(h3): density sweep results for space=${{ matrix.space }} [skip ci]"
+          git push
+
+  update-notebook:
+    name: Update analysis notebook
+    needs: density-sweep
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install notebook dependencies
+        run: pip install jupyter nbconvert scipy numpy matplotlib
+
+      - name: Execute density curve notebook
+        run: |
+          jupyter nbconvert \
+            --to notebook \
+            --execute \
+            --inplace \
+            h3-spaces-density/analysis/density_curve.ipynb \
+          || echo "Notebook execution failed (expected if no data yet)"
+
+      - name: Commit executed notebook
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add h3-spaces-density/analysis/density_curve.ipynb
+          git diff --staged --quiet || \
+            git commit -m "chore(h3): update density_curve notebook output [skip ci]"
+          git push

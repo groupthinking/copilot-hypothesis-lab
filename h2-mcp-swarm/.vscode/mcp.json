@@ -1,0 +1,19 @@
+{
+  "servers": {
+    "spec-mcp": {
+      "url": "http://localhost:3001/mcp",
+      "description": "Returns PRD slice for a GitHub Issue. Tool: get_prd_slice",
+      "tools": ["get_prd_slice"]
+    },
+    "test-mcp": {
+      "url": "http://localhost:3002/mcp",
+      "description": "Generates and runs property-based tests. Tool: generate_and_run",
+      "tools": ["generate_and_run"]
+    },
+    "security-mcp": {
+      "url": "http://localhost:3003/mcp",
+      "description": "Runs CodeQL and semgrep security scans. Tool: scan",
+      "tools": ["scan"]
+    }
+  }
+}
