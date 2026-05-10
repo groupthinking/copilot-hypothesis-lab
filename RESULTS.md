@@ -1,6 +1,6 @@
 # RESULTS.md — Live Experiment Results
 
-> **Last updated:** _Pending first nightly aggregation run_  
+> **Last updated:** 2026-05-10 00:15 UTC  
 > Auto-updated by `.github/workflows/results-aggregator.yml` every night at 00:00 UTC.
 
 ---
@@ -21,33 +21,27 @@
 
 | PR Milestone | Treatment (Memory ON) | Control (Memory OFF) | Δ |
 |-------------|----------------------|---------------------|---|
-| n=10 | — | — | — |
-| n=20 | — | — | — |
-| n=30 | — | — | — |
-| n=40 | — | — | — |
-| n=50 | — | — | — |
+| n=10 | None | None | — |
+| n=20 | None | None | — |
+| n=30 | None | None | — |
+| n=40 | None | None | — |
+| n=50 | None | None | — |
 
 ### Secondary Metrics
 
 | Metric | Treatment | Control |
 |--------|-----------|---------|
-| Avg review comments / PR | — | — |
+| Avg review comments / PR | None | None |
 | Median time-to-green CI (min) | — | — |
-| LESSON: blocks accumulated | 0 | N/A |
+| LESSON: blocks accumulated | 3 | N/A |
 
 ### H1 Verdict
 
-> **Pending** — Experiment not yet started.
+> **Pending**
 
 ---
 
 ## H2 — MCP Swarm beats Monolith
-
-### Per-Issue Results
-
-| Issue # | Arm | Defects (72h) | Review Pass | CI Pass | Token Cost |
-|---------|-----|--------------|-------------|---------|-----------|
-| — | — | — | — | — | — |
 
 ### Aggregate Comparison
 
@@ -60,7 +54,7 @@
 
 ### H2 Verdict
 
-> **Pending** — Experiment not yet started.
+> **Pending**
 
 ---
 
@@ -71,24 +65,15 @@
 | Space | Context Tokens | Avg Tests Pass | Avg Lint Clean | Avg Review Approval | Avg Human Score | Avg Composite |
 |-------|---------------|---------------|----------------|--------------------|-----------------| --------------|
 | 0k | 0 | — | — | — | — | — |
-| 2k | ~2,000 | — | — | — | — | — |
-| 8k | ~8,000 | — | — | — | — | — |
-| 32k | ~32,000 | — | — | — | — | — |
-| 128k | ~128,000 | — | — | — | — | — |
+| 2k | 2000 | — | — | — | — | — |
+| 8k | 8000 | — | — | — | — | — |
+| 32k | 32000 | — | — | — | — | — |
+| 128k | 128000 | — | — | — | — | — |
 | max | TBD | — | — | — | — | — |
-
-### Curve Fit
-
-| Statistic | Value |
-|-----------|-------|
-| Pearson r² | — |
-| Spearman ρ | — |
-| Curve type | — |
-| Knee point (tokens) | — |
 
 ### H3 Verdict
 
-> **Pending** — Experiment not yet started.
+> **Pending**
 
 ---
 
