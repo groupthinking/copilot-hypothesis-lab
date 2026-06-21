@@ -66,3 +66,7 @@ ignore = ["ANN401", "S101", "S311"]
 [tool.mypy]
 python_version = "3.10"
 strict = true
+
+[[tool.mypy.overrides]]
+module = ["hypothesis_lab.agents.claude_agent"]
+warn_unused_ignores = false
