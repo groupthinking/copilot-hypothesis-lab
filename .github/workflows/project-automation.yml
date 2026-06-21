@@ -29,10 +29,32 @@ jobs:
       pull-requests: write
       repository-projects: write
     steps:
+      - name: Resolve project URL
+        id: project-url
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN || secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          PROJECT_NUM: ${{ env.PROJECT_NUMBER }}
+        run: |
+          # Try org-owned project first, fall back to user-owned
+          ORG_ID=$(gh api graphql -f query='
+            query($owner: String!, $num: Int!) {
+              organization(login: $owner) {
+                projectV2(number: $num) { id }
+              }
+            }' -f owner="$OWNER" -F num="$PROJECT_NUM" \
+            --jq '.data.organization.projectV2.id' 2>/dev/null || echo "")
+
+          if [ -n "$ORG_ID" ]; then
+            echo "url=https://github.com/orgs/${OWNER}/projects/${PROJECT_NUM}" >> "$GITHUB_OUTPUT"
+          else
+            echo "url=https://github.com/users/${OWNER}/projects/${PROJECT_NUM}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Add item to project
         uses: actions/add-to-project@v1.0.2
         with:
-          project-url: https://github.com/orgs/${{ github.repository_owner }}/projects/${{ env.PROJECT_NUMBER }}
+          project-url: ${{ steps.project-url.outputs.url }}
           github-token: ${{ secrets.PROJECT_TOKEN || secrets.GITHUB_TOKEN }}
 
   # ── 2. Auto-label issues / PRs by hypothesis based on paths/title ──
@@ -172,7 +194,6 @@ jobs:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN || secrets.GITHUB_TOKEN }}
           TARGET_STATUS: ${{ steps.status.outputs.status }}
           EVENT: ${{ github.event_name }}
-          ITEM_URL: ${{ github.event_name == 'issues' && github.event.issue.html_url || github.event.pull_request.html_url }}
           OWNER: ${{ github.repository_owner }}
           PROJECT_NUM: ${{ env.PROJECT_NUMBER }}
         run: |
@@ -245,7 +266,7 @@ jobs:
           fi
 
           ITEM_ID=$(gh api graphql -f query='
-            query($projectId: ID!, $contentId: ID!) {
+            query($projectId: ID!) {
               node(id: $projectId) {
                 ... on ProjectV2 {
                   items(first: 100) {
@@ -259,7 +280,7 @@ jobs:
                   }
                 }
               }
-            }' -f projectId="$PROJECT_ID" -f contentId="$CONTENT_ID" \
+            }' -f projectId="$PROJECT_ID" \
             --jq ".data.node.items.nodes[] | select(.content.id == \"$CONTENT_ID\") | .id" 2>/dev/null || echo "")
 
           if [ -z "$ITEM_ID" ]; then

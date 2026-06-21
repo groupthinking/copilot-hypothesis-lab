@@ -1,7 +1,7 @@
 name: Bootstrap Project Labels
 
 # Creates the hypothesis-tracking labels used by project-automation.yml.
-# Runs once on push (idempotent — skips labels that already exist).
+# Runs on manual dispatch (idempotent — skips labels that already exist).
 
 on:
   workflow_dispatch:

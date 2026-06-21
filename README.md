@@ -134,7 +134,8 @@ The workflow `.github/workflows/project-automation.yml` keeps the **Project** ta
 | Review approved | Moved to **Done** + handoff comment |
 | Changes requested | Moved to **In Progress** + handoff comment |
 | PR merged | Moved to **Done** + handoff comment |
-| Issue / PR closed | Moved to **Done** |
+| PR closed without merge | Moved to **Triage** |
+| Issue / PR reopened | Moved to **In Progress** / **In Review** |
 
 Issues and PRs are also auto-labeled by hypothesis (`H1-memory`, `H2-swarm`, `H3-spaces`) based on file paths or title keywords.
 
