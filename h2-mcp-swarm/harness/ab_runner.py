@@ -139,17 +139,24 @@ def compute_metrics(
     # Count bugs filed within 72h of merge
     defects_72h = 0
     if merged_at:
-        merged_dt = datetime.datetime.fromisoformat(merged_at.rstrip("Z"))
-        cutoff = (merged_dt + datetime.timedelta(hours=72)).isoformat()
+        merged_dt = datetime.datetime.fromisoformat(merged_at.rstrip("Z")).replace(
+            tzinfo=datetime.timezone.utc
+        )
+        cutoff_dt = merged_dt + datetime.timedelta(hours=72)
         issues_data = github_get(
-            f"/repos/{repo}/issues?state=open&labels=bug&since={merged_at}&per_page=100",
+            f"/repos/{repo}/issues?state=all&labels=bug&since={merged_at}&per_page=100",
             token,
         )
         if isinstance(issues_data, list):
             for issue in issues_data:
                 body = issue.get("body") or ""
-                if f"#{pr_number}" in body and issue.get("created_at", "") <= cutoff:
-                    defects_72h += 1
+                created_raw = issue.get("created_at", "")
+                if f"#{pr_number}" in body and created_raw:
+                    created_dt = datetime.datetime.fromisoformat(
+                        created_raw.rstrip("Z")
+                    ).replace(tzinfo=datetime.timezone.utc)
+                    if created_dt <= cutoff_dt:
+                        defects_72h += 1
 
     return {
         "arm": arm,

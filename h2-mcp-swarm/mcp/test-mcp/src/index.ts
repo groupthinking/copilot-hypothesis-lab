@@ -47,7 +47,7 @@ function detectLanguage(files: string[]): "typescript" | "python" | "unknown" {
 function generatePropertyTests(files: string[], lang: "typescript" | "python" | "unknown"): string {
   if (lang === "typescript") {
     return [
-      `import fc from "fast-check";`,
+      `const fc = require("fast-check");`,
       ``,
       `// Auto-generated property-based tests`,
       `// Files under test: ${files.join(", ")}`,
@@ -140,7 +140,7 @@ async function generateAndRun(args: Record<string, unknown>): Promise<TestResult
   const lang = detectLanguage(files);
   const testCode = generatePropertyTests(files, lang);
 
-  const ext = lang === "python" ? ".py" : ".test.ts";
+  const ext = lang === "python" ? ".py" : ".test.js";
   const tmpDir = path.join(REPO_ROOT, ".test-mcp-tmp");
   fs.mkdirSync(tmpDir, { recursive: true });
   const testPath = path.join(tmpDir, `generated${ext}`);

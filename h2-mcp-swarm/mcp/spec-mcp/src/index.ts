@@ -58,8 +58,17 @@ async function fetchIssue(
       const chunks: Buffer[] = [];
       res.on("data", (c: Buffer) => chunks.push(c));
       res.on("end", () => {
-        const parsed = JSON.parse(Buffer.concat(chunks).toString());
-        resolve({ title: parsed.title ?? "", body: parsed.body ?? null });
+        const raw = Buffer.concat(chunks).toString();
+        if ((res.statusCode ?? 0) < 200 || (res.statusCode ?? 0) >= 300) {
+          reject(new Error(`GitHub API returned HTTP ${res.statusCode} for issue ${issueNumber}: ${raw.slice(0, 200)}`));
+          return;
+        }
+        try {
+          const parsed = JSON.parse(raw);
+          resolve({ title: parsed.title ?? "", body: parsed.body ?? null });
+        } catch (e) {
+          reject(new Error(`Failed to parse GitHub API response: ${e}`));
+        }
       });
     });
     req.on("error", reject);
@@ -81,7 +90,7 @@ function parseAcceptanceCriteria(body: string | null): string[] {
     if (inAcSection) {
       const trimmed = line.trim();
       if (trimmed.startsWith("-") || trimmed.startsWith("*") || /^\d+\./.test(trimmed)) {
-        criteria.push(trimmed.replace(/^[-*\d.]\s*/, ""));
+        criteria.push(trimmed.replace(/^(?:[-*]|\d+\.)\s*/, ""));
       } else if (trimmed === "" && criteria.length > 0) {
         break;
       }

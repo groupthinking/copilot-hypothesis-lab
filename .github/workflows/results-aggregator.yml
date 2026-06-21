@@ -60,7 +60,11 @@ jobs:
               results_dir = pathlib.Path("h2-mcp-swarm/harness/results")
               all_results = []
               for f in sorted(results_dir.glob("*.json")):
-                  all_results.extend(json.loads(f.read_text()))
+                  data = json.loads(f.read_text())
+                  if isinstance(data, list):
+                      all_results.extend(data)
+                  elif isinstance(data, dict):
+                      all_results.extend(data.get("results", []))
               return all_results
 
           def load_h3_results():

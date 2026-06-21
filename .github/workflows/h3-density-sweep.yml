@@ -111,15 +111,13 @@ jobs:
           print(f"Results written to {out_file}")
           EOF
 
-      - name: Commit sweep results
+      - name: Upload sweep results as artifact
         if: steps.filter.outputs.run == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add h3-spaces-density/analysis/raw/
-          git diff --staged --quiet || \
-            git commit -m "chore(h3): density sweep results for space=${{ matrix.space }} [skip ci]"
-          git push
+        uses: actions/upload-artifact@v4
+        with:
+          name: h3-results-${{ matrix.space }}
+          path: h3-spaces-density/analysis/raw/
+          if-no-files-found: ignore
 
   update-notebook:
     name: Update analysis notebook
@@ -131,6 +129,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Download all sweep result artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: h3-results-*
+          path: h3-spaces-density/analysis/raw/
+          merge-multiple: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -149,11 +154,11 @@ jobs:
             h3-spaces-density/analysis/density_curve.ipynb \
           || echo "Notebook execution failed (expected if no data yet)"
 
-      - name: Commit executed notebook
+      - name: Commit results and executed notebook
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add h3-spaces-density/analysis/density_curve.ipynb
+          git add h3-spaces-density/analysis/raw/ h3-spaces-density/analysis/density_curve.ipynb h3-spaces-density/analysis/density_curve.png
           git diff --staged --quiet || \
-            git commit -m "chore(h3): update density_curve notebook output [skip ci]"
+            git commit -m "chore(h3): density sweep results and notebook output [skip ci]"
           git push
