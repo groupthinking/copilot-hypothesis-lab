@@ -1,0 +1,43 @@
+name: Bootstrap Project Labels
+
+# Creates the hypothesis-tracking labels used by project-automation.yml.
+# Runs once on push (idempotent — skips labels that already exist).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-labels:
+    name: Ensure experiment labels exist
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          create_label() {
+            local name="$1" color="$2" desc="$3"
+            gh label create "$name" --color "$color" --description "$desc" \
+              -R "$REPO" 2>/dev/null \
+              || gh label edit "$name" --color "$color" --description "$desc" \
+                -R "$REPO" 2>/dev/null \
+              || echo "Label '$name' already exists"
+          }
+
+          # Hypothesis labels
+          create_label "H1-memory"       "1d76db" "Hypothesis 1 — Memory Flywheel"
+          create_label "H2-swarm"        "0e8a16" "Hypothesis 2 — MCP Swarm"
+          create_label "H3-spaces"       "d93f0b" "Hypothesis 3 — Spaces Density"
+
+          # Experiment arm labels
+          create_label "experiment-h2"   "5319e7" "Issue selected for H2 A/B experiment"
+          create_label "cloud-agent"     "fbca04" "PR created by cloud agent"
+
+          # Flow / status labels
+          create_label "needs-triage"    "e4e669" "Awaiting triage"
+          create_label "in-progress"     "0075ca" "Actively being worked on"
+          create_label "awaiting-review" "c2e0c6" "PR ready for review"
+          create_label "blocked"         "b60205" "Blocked — needs attention"

@@ -16,7 +16,9 @@ copilot-hypothesis-lab/
 │   │   ├── h1-memory-rollup.yml          # Appends LESSON: blocks post-merge
 │   │   ├── h2-swarm-ab.yml               # A/B harness: monolith vs MCP swarm
 │   │   ├── h3-density-sweep.yml          # Runs 6 Spaces × 5 trials
-│   │   └── results-aggregator.yml        # Nightly RESULTS.md update
+│   │   ├── results-aggregator.yml        # Nightly RESULTS.md update
+│   │   ├── project-automation.yml        # Project board sync & handoff tracking
+│   │   └── bootstrap-labels.yml          # One-time label creation
 │   ├── agents/
 │   │   └── memory-writer.skill.md        # H1 agent skill
 │   └── copilot/
@@ -117,6 +119,34 @@ gh workflow run h3-density-sweep.yml
 cd h3-spaces-density/analysis
 jupyter notebook density_curve.ipynb
 ```
+
+### Project Board Automation
+
+The workflow `.github/workflows/project-automation.yml` keeps the **Project** tab in sync with repository activity automatically:
+
+| Event | Board Action |
+|-------|-------------|
+| Issue opened | Added to project → **Triage** column |
+| Issue assigned | Moved to **In Progress** |
+| PR opened (draft) | Moved to **In Progress** |
+| PR opened / ready for review | Moved to **In Review** |
+| Review requested | Moved to **In Review** + handoff comment |
+| Review approved | Moved to **Done** + handoff comment |
+| Changes requested | Moved to **In Progress** + handoff comment |
+| PR merged | Moved to **Done** + handoff comment |
+| Issue / PR closed | Moved to **Done** |
+
+Issues and PRs are also auto-labeled by hypothesis (`H1-memory`, `H2-swarm`, `H3-spaces`) based on file paths or title keywords.
+
+**Setup:**
+
+1. Create a GitHub Project (Board layout) with a **Status** field containing options: `Triage`, `In Progress`, `In Review`, `Done`.
+2. Set the `PROJECT_NUMBER` env var in `project-automation.yml` to match your project number (default: `1`).
+3. If the project is org-owned, create a `PROJECT_TOKEN` secret with `project` scope. For user-owned projects, `GITHUB_TOKEN` is sufficient.
+4. Run the label bootstrap workflow once:
+   ```bash
+   gh workflow run bootstrap-labels.yml
+   ```
 
 ### Nightly Aggregation
 
