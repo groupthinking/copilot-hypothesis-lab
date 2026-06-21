@@ -1,0 +1,83 @@
+name: H1 — Memory Rollup (Append LESSON blocks post-merge)
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  memory-rollup:
+    name: Append LESSON block to MEMORY.md
+    if: |
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'cloud-agent')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ts-node dependencies
+        working-directory: h1-memory-flywheel/scripts
+        run: npm install
+
+      - name: Append LESSON block
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_MERGED_AT: ${{ github.event.pull_request.merged_at }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          REPO: ${{ github.repository }}
+        run: |
+          cd h1-memory-flywheel/scripts
+          npx ts-node append_lesson.ts \
+            --pr "$PR_NUMBER" \
+            --repo "$REPO" \
+            --title "$PR_TITLE" \
+            --author "$PR_AUTHOR"
+
+      - name: Commit updated MEMORY.md
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet h1-memory-flywheel/MEMORY.md; then
+            echo "No changes to MEMORY.md"
+          else
+            git add h1-memory-flywheel/MEMORY.md
+            git commit -m "chore(h1): append LESSON block for PR #${{ github.event.pull_request.number }} [skip ci]"
+            git push
+          fi
+
+      - name: Collect updated metrics
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          pip install requests python-dateutil
+          python h1-memory-flywheel/metrics/collect.py \
+            --repo "$REPO" \
+            --output h1-memory-flywheel/metrics/raw/latest.json
+
+      - name: Commit metrics snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet h1-memory-flywheel/metrics/raw/; then
+            echo "No metric changes"
+          else
+            git add h1-memory-flywheel/metrics/raw/
+            git commit -m "chore(h1): update metrics snapshot [skip ci]"
+            git push
+          fi

@@ -1,0 +1,35 @@
+# Node.js
+node_modules/
+dist/
+.test-mcp-tmp/
+*.js.map
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+h3-spaces-density/analysis/density_curve.png
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+*.swp
+*.swo
+
+# CodeQL temporary files
+.codeql-db-tmp/
+.codeql-results-tmp.sarif

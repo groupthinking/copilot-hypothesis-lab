@@ -1,0 +1,23 @@
+{
+  "collected_at": "2026-06-21T00:23:47.021764Z",
+  "repo": "groupthinking/copilot-hypothesis-lab",
+  "total_prs": 0,
+  "treatment_prs": 0,
+  "control_prs": 0,
+  "treatment_acceptance_rate": null,
+  "control_acceptance_rate": null,
+  "treatment_avg_comments": null,
+  "control_avg_comments": null,
+  "lesson_count": 3,
+  "raw": [],
+  "treatment_rate_at_10": null,
+  "control_rate_at_10": null,
+  "treatment_rate_at_20": null,
+  "control_rate_at_20": null,
+  "treatment_rate_at_30": null,
+  "control_rate_at_30": null,
+  "treatment_rate_at_40": null,
+  "control_rate_at_40": null,
+  "treatment_rate_at_50": null,
+  "control_rate_at_50": null
+}
