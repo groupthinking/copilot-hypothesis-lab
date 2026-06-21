@@ -16,6 +16,7 @@ copilot-hypothesis-lab/
 │   │   ├── h1-memory-rollup.yml          # Appends LESSON: blocks post-merge
 │   │   ├── h2-swarm-ab.yml               # A/B harness: monolith vs MCP swarm
 │   │   ├── h3-density-sweep.yml          # Runs 6 Spaces × 5 trials
+│   │   ├── project-flow-automation.yml   # Project tab automation for handoffs/progress
 │   │   └── results-aggregator.yml        # Nightly RESULTS.md update
 │   ├── agents/
 │   │   └── memory-writer.skill.md        # H1 agent skill
@@ -121,6 +122,13 @@ jupyter notebook density_curve.ipynb
 ### Nightly Aggregation
 
 Results are aggregated automatically by `.github/workflows/results-aggregator.yml` every night at 00:00 UTC and written to [RESULTS.md](RESULTS.md).
+
+### Project Tab Flow Automation
+
+`.github/workflows/project-flow-automation.yml` updates Project tab item status for issue/PR transitions and posts linked-issue handoff comments for PR events. Configure:
+- Repository variable `PROJECT_NUMBER` (required)
+- Repository variable `PROJECT_OWNER` (optional; defaults to repository owner)
+- Secret `PROJECT_V2_TOKEN` (recommended for org-level projects)
 
 ---
 
