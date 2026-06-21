@@ -19,7 +19,7 @@ from hypothesis_lab.retrieval.engine import RetrievalResult
 
 # Soft dependency — SDK is optional
 try:
-    from claude_agent_sdk import (  # type: ignore[import-untyped]
+    from claude_agent_sdk import (  # noqa: PGH003  # type: ignore
         AssistantMessage,
         ClaudeAgentOptions,
         TextBlock,
