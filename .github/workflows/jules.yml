@@ -14,10 +14,13 @@ on:
   pull_request_review_comment:
     types: [created, edited]
 
+permissions: {}
+
 jobs:
   detect-jules-tag:
     name: Check for #Jules tag
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
       tagged: ${{ steps.check.outputs.tagged }}
       body: ${{ steps.check.outputs.body }}
@@ -50,6 +53,7 @@ jobs:
   notify-jules:
     name: Log Jules task
     runs-on: ubuntu-latest
+    permissions: {}
     needs: detect-jules-tag
     if: needs.detect-jules-tag.outputs.tagged == 'true'
     steps:

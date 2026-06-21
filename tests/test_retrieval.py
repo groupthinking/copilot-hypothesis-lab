@@ -169,7 +169,7 @@ class TestRetrievalEngine:
         engine.bandit.update("balanced", reward=0.0)
         docs = self._make_corpus()
         results = engine.retrieve(docs)
-        # With gravity strategy all novelty_scores should be 0
+        # With gravity strategy all novelty scores should be 0
         for r in results:
             if r.strategy == "gravity":
                 assert r.novelty_score == 0.0

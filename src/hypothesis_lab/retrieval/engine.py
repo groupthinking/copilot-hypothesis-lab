@@ -119,16 +119,19 @@ class RetrievalEngine:
 
         # Apply anti-gravity re-ranking for "anti_gravity" and "balanced"
         reranked = self.anti_gravity.diversity_rerank(gravity_ranked, top_k=top_k)
-        return [
-            RetrievalResult(
-                document=doc,
-                gravity_score=g_score - self.anti_gravity.novelty_score(doc),
-                novelty_score=self.anti_gravity.novelty_score(doc),
-                combined_score=g_score,
-                strategy=strategy,
+        results_out = []
+        for doc, combined_score in reranked:
+            novelty = self.anti_gravity.novelty_score(doc)
+            results_out.append(
+                RetrievalResult(
+                    document=doc,
+                    gravity_score=combined_score - novelty,
+                    novelty_score=novelty,
+                    combined_score=combined_score,
+                    strategy=strategy,
+                )
             )
-            for doc, g_score in reranked
-        ]
+        return results_out
 
     def feedback(self, result: RetrievalResult, reward: float, engaged: bool = True) -> None:
         """

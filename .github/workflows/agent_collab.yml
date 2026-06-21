@@ -21,10 +21,15 @@ on:
           - report
           - optimise
 
+permissions:
+  contents: read
+
 jobs:
   analyse:
     name: Run hypothesis analysis
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: github.event.inputs.task == 'analyse' || github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@v4
@@ -49,6 +54,8 @@ jobs:
   report:
     name: Generate status report
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: github.event.inputs.task == 'report'
     steps:
       - uses: actions/checkout@v4
