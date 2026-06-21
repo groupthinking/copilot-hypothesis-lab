@@ -1,3 +1,37 @@
+Metadata-Version: 2.4
+Name: hypothesis-lab
+Version: 0.1.0
+Summary: A managed AI agent system exploring gravity vs anti-gravity in retrieval systems
+License: MIT
+Project-URL: Homepage, https://github.com/groupthinking/copilot-hypothesis-lab
+Project-URL: Repository, https://github.com/groupthinking/copilot-hypothesis-lab
+Project-URL: Issues, https://github.com/groupthinking/copilot-hypothesis-lab/issues
+Keywords: ai,agents,retrieval,exploration,exploitation,rag
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: anyio>=4.0
+Requires-Dist: numpy>=1.24
+Requires-Dist: httpx>=0.25
+Requires-Dist: pydantic>=2.0
+Provides-Extra: claude
+Requires-Dist: claude-agent-sdk>=0.1.0; extra == "claude"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21; extra == "dev"
+Requires-Dist: pytest-cov>=4.1; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.5; extra == "dev"
+Provides-Extra: all
+Requires-Dist: hypothesis-lab[claude,dev]; extra == "all"
+
 # copilot-hypothesis-lab
 
 > A managed AI agent system exploring **gravity vs anti-gravity** in AI retrieval — the balance between exploitation (relevance) and exploration (serendipity).
