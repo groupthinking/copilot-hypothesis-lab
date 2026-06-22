@@ -158,7 +158,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add h3-spaces-density/analysis/raw/ h3-spaces-density/analysis/density_curve.ipynb h3-spaces-density/analysis/density_curve.png
+          git add h3-spaces-density/analysis/raw/ h3-spaces-density/analysis/density_curve.ipynb
           git diff --staged --quiet || \
             git commit -m "chore(h3): density sweep results and notebook output [skip ci]"
           git push
