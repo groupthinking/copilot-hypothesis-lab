@@ -47,7 +47,6 @@ jobs:
           pr_json="$(gh api "repos/$REPO/pulls/$PR_NUMBER")"
           state="$(jq -r '.state' <<<"$pr_json")"
           draft="$(jq -r '.draft' <<<"$pr_json")"
-          mergeable_state="$(jq -r '.mergeable_state // "unknown"' <<<"$pr_json")"
 
           if [[ "$state" != "open" ]]; then
             echo "PR #$PR_NUMBER is not open (state: $state)." >&2
@@ -59,8 +58,23 @@ jobs:
             exit 1
           fi
 
+          # Wait up to 30 seconds (6 retries × 5-second intervals) for
+          # GitHub to compute mergeability metadata.
+          max_retries=6
+          retry_delay_seconds=5
+          mergeable_state=""
+          for attempt in $(seq 1 "$max_retries"); do
+            pr_json="$(gh api "repos/$REPO/pulls/$PR_NUMBER")"
+            mergeable_state="$(jq -r '.mergeable_state // "unknown"' <<<"$pr_json")"
+            if [[ "$mergeable_state" != "unknown" ]]; then
+              break
+            fi
+            echo "mergeable_state=unknown, retrying ($attempt/$max_retries)..."
+            sleep "$retry_delay_seconds"
+          done
+
           case "$mergeable_state" in
-            clean|unstable|has_hooks|unknown)
+            clean|has_hooks)
               echo "mergeable_state=$mergeable_state"
               ;;
             *)
@@ -74,7 +88,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ inputs.pull_number }}
           REPO: ${{ github.repository }}
-        run: gh pr checks "$PR_NUMBER" --required --repo "$REPO"
+        run: |
+          set -euo pipefail
+          if ! gh pr checks "$PR_NUMBER" --required --repo "$REPO"; then
+            echo "Required checks are not passing for PR #$PR_NUMBER." >&2
+            echo "Current check status:" >&2
+            gh pr checks "$PR_NUMBER" --repo "$REPO" || true
+            exit 1
+          fi
 
       - name: Merge pull request
         env:
