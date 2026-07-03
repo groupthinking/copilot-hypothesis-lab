@@ -154,6 +154,17 @@ pytest tests/ --cov=hypothesis_lab --cov-report=term-missing
 | `ci.yml` | Push / PR | Lint, type-check, test across Python 3.10–3.12 |
 | `jules.yml` | Issue/PR with `#Jules` | Detects Jules tasks and logs them for dispatch |
 | `agent_collab.yml` | Schedule / manual | Daily analysis run and agent coordination |
+| `pr_merge.yml` | Manual (`workflow_dispatch`) | Validates and merges a ready PR using selected merge method |
+
+### Using the PR Merge Tool
+
+Run the **PR Merge Tool** workflow from the Actions tab, then provide:
+
+- `pull_number` — PR number to merge
+- `merge_method` — `merge`, `squash`, or `rebase`
+- `delete_branch` — whether to remove the source branch after merge
+
+The workflow validates the PR is open, non-draft, and has required checks passing before attempting the merge.
 
 ---
 

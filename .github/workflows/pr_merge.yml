@@ -1,0 +1,94 @@
+name: PR Merge Tool
+
+on:
+  workflow_dispatch:
+    inputs:
+      pull_number:
+        description: "Pull request number to merge"
+        required: true
+        type: string
+      merge_method:
+        description: "Merge method"
+        required: true
+        type: choice
+        default: squash
+        options:
+          - merge
+          - squash
+          - rebase
+      delete_branch:
+        description: "Delete branch after merge"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    name: Merge pull request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate pull request state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pull_number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "Invalid pull request number: $PR_NUMBER" >&2
+            exit 1
+          fi
+
+          pr_json="$(gh api "repos/$REPO/pulls/$PR_NUMBER")"
+          state="$(jq -r '.state' <<<"$pr_json")"
+          draft="$(jq -r '.draft' <<<"$pr_json")"
+          mergeable_state="$(jq -r '.mergeable_state // "unknown"' <<<"$pr_json")"
+
+          if [[ "$state" != "open" ]]; then
+            echo "PR #$PR_NUMBER is not open (state: $state)." >&2
+            exit 1
+          fi
+
+          if [[ "$draft" == "true" ]]; then
+            echo "PR #$PR_NUMBER is still a draft." >&2
+            exit 1
+          fi
+
+          case "$mergeable_state" in
+            clean|unstable|has_hooks|unknown)
+              echo "mergeable_state=$mergeable_state"
+              ;;
+            *)
+              echo "PR #$PR_NUMBER is not mergeable (mergeable_state: $mergeable_state)." >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Require passing checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pull_number }}
+          REPO: ${{ github.repository }}
+        run: gh pr checks "$PR_NUMBER" --required --repo "$REPO"
+
+      - name: Merge pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pull_number }}
+          MERGE_METHOD: ${{ inputs.merge_method }}
+          DELETE_BRANCH: ${{ inputs.delete_branch }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          merge_args=( "--${MERGE_METHOD}" "--repo" "$REPO" )
+          if [[ "$DELETE_BRANCH" == "true" ]]; then
+            merge_args+=(--delete-branch)
+          fi
+
+          gh pr merge "$PR_NUMBER" "${merge_args[@]}"
