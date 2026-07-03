@@ -95,6 +95,11 @@ class TestGravityLayer:
         with pytest.raises(ValueError, match="dimension mismatch"):
             layer.update_preference([1.0])
 
+    def test_update_preference_invalid_learning_rate(self) -> None:
+        layer = GravityLayer([1.0, 0.0])
+        with pytest.raises(ValueError, match="learning_rate"):
+            layer.update_preference([1.0, 0.0], learning_rate=1.5)
+
 
 # ── AntiGravityLayer ───────────────────────────────────────────────────────
 
@@ -140,6 +145,15 @@ class TestAntiGravityLayer:
         assert len(layer.history_vectors) == 1
         layer.clear_history()
         assert len(layer.history_vectors) == 0
+
+    def test_add_to_history_dimension_mismatch_raises(self) -> None:
+        layer = AntiGravityLayer(history_vectors=[[1.0, 0.0]])
+        with pytest.raises(ValueError, match="dimension mismatch"):
+            layer.add_to_history([1.0, 0.0, 0.0])
+
+    def test_init_history_dimension_mismatch_raises(self) -> None:
+        with pytest.raises(ValueError, match="consistent dimensions"):
+            AntiGravityLayer(history_vectors=[[1.0], [1.0, 0.0]])
 
 
 # ── RetrievalEngine ────────────────────────────────────────────────────────

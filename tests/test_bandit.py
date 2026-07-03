@@ -32,6 +32,18 @@ class TestEpsilonGreedyBandit:
         with pytest.raises(ValueError, match="epsilon"):
             EpsilonGreedyBandit(arms=["a"], epsilon=1.5)
 
+    def test_invalid_epsilon_decay(self) -> None:
+        with pytest.raises(ValueError, match="epsilon_decay"):
+            EpsilonGreedyBandit(arms=["a"], epsilon_decay=1.5)
+
+    def test_invalid_min_epsilon(self) -> None:
+        with pytest.raises(ValueError, match="min_epsilon"):
+            EpsilonGreedyBandit(arms=["a"], min_epsilon=-0.1)
+
+    def test_invalid_min_epsilon_upper_bound(self) -> None:
+        with pytest.raises(ValueError, match="min_epsilon"):
+            EpsilonGreedyBandit(arms=["a"], min_epsilon=1.1)
+
     def test_select_returns_valid_arm(self) -> None:
         bandit = EpsilonGreedyBandit(arms=["a", "b", "c"], seed=42)
         for _ in range(20):

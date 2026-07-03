@@ -5,10 +5,9 @@ The AntiGravityLayer implements the "anti-gravity" or serendipity mechanism.
 It promotes documents that are semantically *distant* from the user's recent
 history, countering the echo-chamber effect and injecting diversity.
 
-Three strategies are provided:
+Two strategies are provided:
 1. Diversity re-ranking — penalise documents too close to already-seen content.
 2. Entropy injection — blend random-direction vectors into the query.
-3. Trend boosting — boost globally trending topics.
 """
 
 from __future__ import annotations
@@ -40,6 +39,10 @@ class AntiGravityLayer:
         if not 0.0 <= anti_gravity_strength <= 1.0:
             raise ValueError("anti_gravity_strength must be between 0.0 and 1.0")
         self.history_vectors: list[list[float]] = history_vectors or []
+        if self.history_vectors:
+            expected_dim = len(self.history_vectors[0])
+            if any(len(vector) != expected_dim for vector in self.history_vectors):
+                raise ValueError("history_vectors must have consistent dimensions")
         self.anti_gravity_strength = anti_gravity_strength
         self.entropy_scale = entropy_scale
         self._rng = random.Random(seed)
@@ -110,6 +113,8 @@ class AntiGravityLayer:
 
     def add_to_history(self, vector: list[float]) -> None:
         """Add a vector to the seen-document history."""
+        if self.history_vectors and len(vector) != len(self.history_vectors[0]):
+            raise ValueError("history vector dimension mismatch")
         self.history_vectors.append(vector)
 
     def clear_history(self) -> None:

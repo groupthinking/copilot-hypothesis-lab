@@ -41,9 +41,13 @@ jobs:
           URL="${ISSUE_URL:-${COMMENT_URL:-$PR_URL}}"
 
           if echo "$BODY" | grep -qi '#Jules'; then
-            echo "tagged=true" >> "$GITHUB_OUTPUT"
-            echo "body=$BODY" >> "$GITHUB_OUTPUT"
-            echo "url=$URL" >> "$GITHUB_OUTPUT"
+            {
+              echo "tagged=true"
+              echo "body<<__JULES_BODY__"
+              echo "$BODY"
+              echo "__JULES_BODY__"
+              echo "url=$URL"
+            } >> "$GITHUB_OUTPUT"
             echo "✅ #Jules tag detected in: $URL"
           else
             echo "tagged=false" >> "$GITHUB_OUTPUT"
