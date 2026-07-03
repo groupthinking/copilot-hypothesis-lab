@@ -86,6 +86,8 @@ class GravityLayer:
             feedback_vector: Embedding of the document the user engaged with.
             learning_rate: Step size for the update (0.0–1.0).
         """
+        if not 0.0 <= learning_rate <= 1.0:
+            raise ValueError("learning_rate must be between 0.0 and 1.0")
         if len(feedback_vector) != len(self.preference_vector):
             raise ValueError("feedback_vector dimension mismatch")
         self.preference_vector = [
