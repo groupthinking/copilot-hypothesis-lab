@@ -71,8 +71,6 @@ class EpsilonGreedyBandit:
             raise ValueError("epsilon_decay must be between 0.0 and 1.0")
         if not 0.0 <= min_epsilon <= 1.0:
             raise ValueError("min_epsilon must be between 0.0 and 1.0")
-        if min_epsilon > epsilon:
-            raise ValueError("min_epsilon must be less than or equal to epsilon")
 
         self._rng = random.Random(seed)
         self.epsilon = epsilon

@@ -40,9 +40,9 @@ class TestEpsilonGreedyBandit:
         with pytest.raises(ValueError, match="min_epsilon"):
             EpsilonGreedyBandit(arms=["a"], min_epsilon=-0.1)
 
-    def test_min_epsilon_greater_than_epsilon_raises(self) -> None:
-        with pytest.raises(ValueError, match="less than or equal to epsilon"):
-            EpsilonGreedyBandit(arms=["a"], epsilon=0.1, min_epsilon=0.2)
+    def test_invalid_min_epsilon_upper_bound(self) -> None:
+        with pytest.raises(ValueError, match="min_epsilon"):
+            EpsilonGreedyBandit(arms=["a"], min_epsilon=1.1)
 
     def test_select_returns_valid_arm(self) -> None:
         bandit = EpsilonGreedyBandit(arms=["a", "b", "c"], seed=42)
