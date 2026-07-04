@@ -1,1 +1,188 @@
 # copilot-hypothesis-lab
+
+> A managed AI agent system exploring **gravity vs anti-gravity** in AI retrieval — the balance between exploitation (relevance) and exploration (serendipity).
+
+[![CI](https://github.com/groupthinking/copilot-hypothesis-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/groupthinking/copilot-hypothesis-lab/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+
+---
+
+## The Hypothesis
+
+In an AI retrieval system:
+
+- **Gravity** is the force that pulls results toward your specific interests — exploitation.
+- **Anti-gravity** (entropy/serendipity) pushes the system toward exploration and diversification.
+
+A balanced system uses gravity to ensure relevance and entropy to ensure you aren't just seeing the same thing repeated back to you.
+
+This lab implements and experiments with three architectural patterns:
+
+1. **Exploration/Exploitation Trade-off** — Multi-Armed Bandits (Epsilon-Greedy & Thompson Sampling)
+2. **Diversity Re-ranking** — Novelty scoring based on semantic distance from history
+3. **Broadening Vectors** — Entropy injection into query vectors
+
+---
+
+## Managed Agent System
+
+This repository runs a **managed agent collaboration system** between:
+
+| Agent | Role |
+|-------|------|
+| **Claude** (via GitHub Copilot) | Code review, technical analysis, hypothesis generation |
+| **Jules** (Google Labs) | Async coding tasks — use `#Jules` tag in any issue or PR |
+
+### Using Jules
+
+Add `#Jules` anywhere in an issue or PR comment to trigger the Jules detection workflow. Jules will pick up the task and implement it asynchronously.
+
+See [jules-task-prompts](https://github.com/groupthinking/jules-task-prompts) for effective Jules prompt patterns.
+
+---
+
+## Installation
+
+```bash
+# Core package (no Claude SDK required)
+pip install -e .
+
+# With Claude Agent SDK support
+pip install -e ".[claude]"
+
+# Full development setup
+pip install -e ".[all]"
+```
+
+**Requirements:** Python 3.10+
+
+---
+
+## Quick Start
+
+```python
+from hypothesis_lab import RetrievalEngine
+from hypothesis_lab.retrieval.gravity import Document
+
+# Create a document corpus
+corpus = [
+    Document(id="doc1", content="AI and machine learning", vector=[1.0, 0.0, 0.0]),
+    Document(id="doc2", content="History of art", vector=[0.0, 1.0, 0.0]),
+    Document(id="doc3", content="Sports analytics", vector=[0.0, 0.0, 1.0]),
+]
+
+# Initialise the engine with your preference vector
+engine = RetrievalEngine(
+    preference_vector=[1.0, 0.0, 0.0],  # Interested in AI
+    gravity_strength=0.8,
+    anti_gravity_strength=0.4,
+    epsilon=0.15,  # 15% exploration
+)
+
+# Retrieve results (bandit picks gravity/anti_gravity/balanced strategy)
+results = engine.retrieve(corpus, top_k=3)
+for r in results:
+    print(f"[{r.strategy}] {r.id}: gravity={r.gravity_score:.2f} novelty={r.novelty_score:.2f}")
+
+# Provide feedback to update the system
+engine.feedback(results[0], reward=1.0, engaged=True)
+```
+
+Run the full demo:
+```bash
+python examples/quick_start.py
+```
+
+---
+
+## Architecture
+
+```
+hypothesis_lab/
+├── bandit.py              # Multi-Armed Bandit (Epsilon-Greedy, Thompson Sampling)
+├── retrieval/
+│   ├── gravity.py         # Exploitation — cosine similarity to preference vector
+│   ├── anti_gravity.py    # Exploration — novelty scoring, entropy injection
+│   └── engine.py          # Orchestrator — bandit-driven strategy selection
+└── agents/
+    ├── base.py            # AgentMessage, AgentRole types
+    └── claude_agent.py    # Claude Agent SDK integration
+```
+
+### Key Components
+
+#### `RetrievalEngine`
+Orchestrates gravity and anti-gravity layers using a bandit to adaptively select the retrieval strategy:
+- `"gravity"` — pure exploitation (cosine similarity to preferences)
+- `"anti_gravity"` — pure exploration (entropy-injected query + novelty re-ranking)
+- `"balanced"` — combines both
+
+#### `EpsilonGreedyBandit` / `ThompsonSamplingBandit`
+Implements the exploration/exploitation trade-off. The bandit learns which retrieval strategy yields higher user engagement over time.
+
+#### `GravityLayer`
+Scores documents by cosine similarity to the user's preference vector. The preference vector updates via exponential moving average based on feedback.
+
+#### `AntiGravityLayer`
+Three mechanisms for diversity:
+1. **Novelty scoring** — penalises documents similar to recently seen content
+2. **Diversity re-ranking** — combines gravity + novelty scores
+3. **Entropy injection** — adds Gaussian noise to the query vector
+
+#### `ClaudeHypothesisAgent`
+Uses the [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk) to analyse retrieval results and generate hypotheses about the optimal gravity/anti-gravity balance.
+
+---
+
+## Running Tests
+
+```bash
+pytest tests/ -v
+```
+
+With coverage:
+```bash
+pytest tests/ --cov=hypothesis_lab --cov-report=term-missing
+```
+
+---
+
+## CI/CD Workflows
+
+| Workflow | Trigger | Description |
+|----------|---------|-------------|
+| `ci.yml` | Push / PR | Lint, type-check, test across Python 3.10–3.12 |
+| `jules.yml` | Issue/PR with `#Jules` | Detects Jules tasks and logs them for dispatch |
+| `agent_collab.yml` | Schedule / manual | Daily analysis run and agent coordination |
+| `pr_merge.yml` | Manual (`workflow_dispatch`) | Validates and merges a ready PR using selected merge method |
+
+### Using the PR Merge Tool
+
+Run the **PR Merge Tool** workflow from the Actions tab, then provide:
+
+- `pull_number` — PR number to merge
+- `merge_method` — `merge`, `squash`, or `rebase`
+- `delete_branch` — whether to remove the source branch after merge
+
+The workflow validates the PR is open, non-draft, and has required checks passing before attempting the merge.
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Write tests for your changes
+4. Run `ruff check src/ tests/` and `pytest tests/`
+5. Submit a PR using the PR template
+
+For Jules tasks, open an issue with the `#Jules` tag or use the Jules Task issue template.
+
+---
+
+## References
+
+- [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk)
+- [Jules task prompts](https://github.com/groupthinking/jules-task-prompts)
+- [Multi-Armed Bandit algorithms](https://en.wikipedia.org/wiki/Multi-armed_bandit)
+- [Maximal Marginal Relevance (diversity re-ranking)](https://dl.acm.org/doi/10.1145/290941.291025)
