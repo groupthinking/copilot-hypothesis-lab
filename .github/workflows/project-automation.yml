@@ -21,13 +21,15 @@ jobs:
   add-to-project:
     name: Add to project board
     if: >
-      github.event_name == 'issues' && github.event.action == 'opened' ||
-      github.event_name == 'pull_request' && github.event.action == 'opened'
+      (github.event_name == 'issues' && contains(fromJSON('["opened","assigned","reopened"]'), github.event.action)) ||
+      (github.event_name == 'pull_request' &&
+       contains(fromJSON('["opened","reopened","ready_for_review","review_requested"]'), github.event.action) &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       issues: write
       pull-requests: write
-      repository-projects: write
+      projects: write
     steps:
       - name: Resolve project URL
         id: project-url
@@ -37,13 +39,14 @@ jobs:
           PROJECT_NUM: ${{ env.PROJECT_NUMBER }}
         run: |
           # Try org-owned project first, fall back to user-owned
+          # Use `// empty` so jq exits with no output (not "null") on missing fields
           ORG_ID=$(gh api graphql -f query='
             query($owner: String!, $num: Int!) {
               organization(login: $owner) {
                 projectV2(number: $num) { id }
               }
             }' -f owner="$OWNER" -F num="$PROJECT_NUM" \
-            --jq '.data.organization.projectV2.id' 2>/dev/null || echo "")
+            --jq '.data.organization.projectV2.id // empty' 2>/dev/null || echo "")
 
           if [ -n "$ORG_ID" ]; then
             echo "url=https://github.com/orgs/${OWNER}/projects/${PROJECT_NUM}" >> "$GITHUB_OUTPUT"
@@ -99,7 +102,7 @@ jobs:
           fi
 
       - name: Label PRs by changed paths
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -131,7 +134,7 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-      repository-projects: write
+      projects: write
     steps:
       - name: Determine target status
         id: status
@@ -173,7 +176,13 @@ jobs:
                   STATUS="Triage"
                 fi
                 ;;
-              reopened)            STATUS="In Review"   ;;
+              reopened)
+                if [ "$DRAFT" = "true" ]; then
+                  STATUS="In Progress"
+                else
+                  STATUS="In Review"
+                fi
+                ;;
             esac
           fi
 
@@ -198,13 +207,14 @@ jobs:
           PROJECT_NUM: ${{ env.PROJECT_NUMBER }}
         run: |
           # Resolve project ID
+          # Use `// empty` so jq exits with no output (not "null") when the field is absent
           PROJECT_ID=$(gh api graphql -f query='
             query($owner: String!, $num: Int!) {
               organization(login: $owner) {
                 projectV2(number: $num) { id }
               }
             }' -f owner="$OWNER" -F num="$PROJECT_NUM" \
-            --jq '.data.organization.projectV2.id' 2>/dev/null || echo "")
+            --jq '.data.organization.projectV2.id // empty' 2>/dev/null || echo "")
 
           # Fall back to user-owned project if org lookup fails
           if [ -z "$PROJECT_ID" ]; then
@@ -214,7 +224,7 @@ jobs:
                   projectV2(number: $num) { id }
                 }
               }' -f owner="$OWNER" -F num="$PROJECT_NUM" \
-              --jq '.data.user.projectV2.id' 2>/dev/null || echo "")
+              --jq '.data.user.projectV2.id // empty' 2>/dev/null || echo "")
           fi
 
           if [ -z "$PROJECT_ID" ]; then
@@ -257,7 +267,10 @@ jobs:
             exit 0
           fi
 
-          # Find the item on the project board
+          # Ensure the item is on the project board and get its item ID.
+          # addProjectV2ItemById is idempotent — it returns the existing item if
+          # already present, so this also handles items added before this workflow
+          # was introduced and avoids the 100-item pagination ceiling.
           CONTENT_ID=""
           if [ "$EVENT" = "issues" ]; then
             CONTENT_ID="${{ github.event.issue.node_id }}"
@@ -266,31 +279,22 @@ jobs:
           fi
 
           ITEM_ID=$(gh api graphql -f query='
-            query($projectId: ID!) {
-              node(id: $projectId) {
-                ... on ProjectV2 {
-                  items(first: 100) {
-                    nodes {
-                      id
-                      content {
-                        ... on Issue { id }
-                        ... on PullRequest { id }
-                      }
-                    }
-                  }
-                }
+            mutation($projectId: ID!, $contentId: ID!) {
+              addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
+                item { id }
               }
             }' -f projectId="$PROJECT_ID" \
-            --jq ".data.node.items.nodes[] | select(.content.id == \"$CONTENT_ID\") | .id" 2>/dev/null || echo "")
+               -f contentId="$CONTENT_ID" \
+            --jq '.data.addProjectV2ItemById.item.id // empty' 2>/dev/null || echo "")
 
           if [ -z "$ITEM_ID" ]; then
-            echo "::notice::Item not yet on project board — it will be added by the add-to-project job"
+            echo "::warning::Could not add or locate item on project board — skipping status update"
             exit 0
           fi
 
           # Update the Status field
           gh api graphql -f query='
-            mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+            mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: ID!) {
               updateProjectV2ItemFieldValue(input: {
                 projectId: $projectId
                 itemId: $itemId
@@ -332,7 +336,11 @@ jobs:
           if [ "$EVENT" = "pull_request" ]; then
             case "$ACTION" in
               review_requested)
-                COMMENT="**Handoff →** @${ACTOR} requested review from @${REVIEWER:-a team member}."
+                if [ -n "$REVIEWER" ]; then
+                  COMMENT="**Handoff →** @${ACTOR} requested review from @${REVIEWER}."
+                else
+                  COMMENT="**Handoff →** @${ACTOR} requested a team review."
+                fi
                 ;;
               ready_for_review)
                 COMMENT="**Handoff →** @${ACTOR} marked this PR as ready for review."
