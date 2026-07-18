@@ -1,6 +1,6 @@
 # RESULTS.md — Live Experiment Results
 
-> **Last updated:** 2026-07-17 00:17 UTC  
+> **Last updated:** 2026-07-18 00:15 UTC  
 > Auto-updated by `.github/workflows/results-aggregator.yml` every night at 00:00 UTC.
 
 ---
