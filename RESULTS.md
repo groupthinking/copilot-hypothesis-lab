@@ -1,6 +1,6 @@
 # RESULTS.md — Live Experiment Results
 
-> **Last updated:** 2026-07-20 00:18 UTC  
+> **Last updated:** 2026-07-21 00:17 UTC  
 > Auto-updated by `.github/workflows/results-aggregator.yml` every night at 00:00 UTC.
 
 ---
@@ -11,7 +11,7 @@
 |------------|--------|--------------|-----------|---------|
 | H1 — Memory Flywheel | 🟡 Running | 0 / 50 | — | Pending |
 | H2 — MCP Swarm | 🟡 Running | 0 / 20 | — | Pending |
-| H3 — Spaces Density | 🟡 Running | 50 / 30 | — | Pending |
+| H3 — Spaces Density | 🟡 Running | 55 / 30 | — | Pending |
 
 ---
 
