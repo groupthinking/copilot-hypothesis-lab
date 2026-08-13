@@ -1,0 +1,78 @@
+name: Jules Task Dispatch
+
+# Trigger Jules whenever an issue or PR comment contains the #Jules tag.
+# Jules (https://jules.google.com) is an async coding agent from Google Labs.
+# It picks up the task from the issue or PR context and implements it.
+
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created, edited]
+  pull_request:
+    types: [opened, edited]
+  pull_request_review_comment:
+    types: [created, edited]
+
+permissions: {}
+
+jobs:
+  detect-jules-tag:
+    name: Check for #Jules tag
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      tagged: ${{ steps.check.outputs.tagged }}
+      body: ${{ steps.check.outputs.body }}
+      url: ${{ steps.check.outputs.url }}
+    steps:
+      - name: Check for #Jules in event body
+        id: check
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          COMMENT_URL: ${{ github.event.comment.html_url }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          BODY="${ISSUE_BODY:-${COMMENT_BODY:-$PR_BODY}}"
+          URL="${ISSUE_URL:-${COMMENT_URL:-$PR_URL}}"
+
+          if echo "$BODY" | grep -qi '#Jules'; then
+            {
+              echo "tagged=true"
+              echo "body<<__JULES_BODY__"
+              echo "$BODY"
+              echo "__JULES_BODY__"
+              echo "url=$URL"
+            } >> "$GITHUB_OUTPUT"
+            echo "✅ #Jules tag detected in: $URL"
+          else
+            echo "tagged=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️  No #Jules tag found."
+          fi
+
+  notify-jules:
+    name: Log Jules task
+    runs-on: ubuntu-latest
+    permissions: {}
+    needs: detect-jules-tag
+    if: needs.detect-jules-tag.outputs.tagged == 'true'
+    steps:
+      - name: Log task details
+        env:
+          TASK_URL: ${{ needs.detect-jules-tag.outputs.url }}
+          TASK_BODY: ${{ needs.detect-jules-tag.outputs.body }}
+        run: |
+          echo "🤖 Jules task detected!"
+          echo "URL: $TASK_URL"
+          echo "---"
+          echo "To assign this task to Jules:"
+          echo "1. Visit https://jules.google.com"
+          echo "2. Connect your GitHub repository"
+          echo "3. Point Jules at: $TASK_URL"
+          echo "---"
+          echo "Task body (first 500 chars):"
+          echo "${TASK_BODY:0:500}"
