@@ -19,6 +19,8 @@ copilot-hypothesis-lab/
 │   │   ├── results-aggregator.yml        # Nightly RESULTS.md update
 │   │   ├── project-automation.yml        # Project board sync & handoff tracking
 │   │   └── bootstrap-labels.yml          # One-time label creation
+│   │   ├── project-flow-automation.yml   # Project tab automation for handoffs/progress
+│   │   └── results-aggregator.yml        # Nightly RESULTS.md update
 │   ├── agents/
 │   │   └── memory-writer.skill.md        # H1 agent skill
 │   └── copilot/
@@ -152,6 +154,13 @@ Issues and PRs are also auto-labeled by hypothesis (`H1-memory`, `H2-swarm`, `H3
 ### Nightly Aggregation
 
 Results are aggregated automatically by `.github/workflows/results-aggregator.yml` every night at 00:00 UTC and written to [RESULTS.md](RESULTS.md).
+
+### Project Tab Flow Automation
+
+`.github/workflows/project-flow-automation.yml` updates Project tab item status for issue/PR transitions and posts linked-issue handoff comments for PR events. Configure:
+- Repository variable `PROJECT_NUMBER` (required)
+- Repository variable `PROJECT_OWNER` (optional; defaults to repository owner)
+- Secret `PROJECT_V2_TOKEN` (recommended for org-level projects)
 
 ---
 
