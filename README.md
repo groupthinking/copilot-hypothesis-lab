@@ -26,7 +26,9 @@ copilot-hypothesis-lab/
 │   ├── skills/
 │   │   ├── github-actions-failure-debugging/
 │   │   ├── documentation-writer/
-│   │   └── hypothesis-test-planner/      # Project Copilot skills
+│   │   ├── hypothesis-test-planner/
+│   │   ├── code-review/
+│   │   └── experiment-issue-triage/      # Project Copilot skills
 │   └── copilot/
 │       └── custom-agents/
 │           ├── memory-reader.agent.md    # H1 custom agent
@@ -81,8 +83,10 @@ Project skills are in `.github/skills/`:
 - `github-actions-failure-debugging`: triage workflow failures using Actions run + job logs, then report `past performance`, `current gaps/errors`, and `next steps planned` for linked `.agent-orchestrator` work.
 - `documentation-writer`: keep benchmark docs accurate and hypothesis-consistent when editing README/spec/results content.
 - `hypothesis-test-planner`: run minimal targeted validation for H1/H2/H3 changes and summarize residual risk.
+- `code-review`: focus Copilot code review on experiment correctness, workflow safety, MCP behavior, and linked `.agent-orchestrator` handoff quality.
+- `experiment-issue-triage`: classify lab issues into H1/H2/H3/project automation work, preserve existing labels, and prepare compact orchestrator handoffs.
 
-Two of these (`documentation-writer`, `hypothesis-test-planner`) are adapted from common skill patterns listed on Skills.sh, but constrained to this repository's experiment structure.
+These skills adapt common Skills.sh patterns (workflow debugging, documentation, testing, code review, and issue triage) to this repository's experiment structure and the connected `groupthinking/.agent-orchestrator` workflow.
 
 ### Hypothesis 1 — Memory Flywheel
 
