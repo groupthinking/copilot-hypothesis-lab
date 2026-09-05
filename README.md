@@ -23,6 +23,10 @@ copilot-hypothesis-lab/
 │   │   └── results-aggregator.yml        # Nightly RESULTS.md update
 │   ├── agents/
 │   │   └── memory-writer.skill.md        # H1 agent skill
+│   ├── skills/
+│   │   ├── github-actions-failure-debugging/
+│   │   ├── documentation-writer/
+│   │   └── hypothesis-test-planner/      # Project Copilot skills
 │   └── copilot/
 │       └── custom-agents/
 │           ├── memory-reader.agent.md    # H1 custom agent
@@ -70,6 +74,15 @@ See [HYPOTHESES.md](HYPOTHESES.md) for full pre-registered specification.
 - `GITHUB_TOKEN` with `repo`, `pull_requests: write`, `issues: write` scopes
 - Python 3.11+ and Node.js 20+ installed locally
 - `gh` CLI authenticated
+
+### Copilot Skills In This Repo
+
+Project skills are in `.github/skills/`:
+- `github-actions-failure-debugging`: triage workflow failures using Actions run + job logs, then report `past performance`, `current gaps/errors`, and `next steps planned` for linked `.agent-orchestrator` work.
+- `documentation-writer`: keep benchmark docs accurate and hypothesis-consistent when editing README/spec/results content.
+- `hypothesis-test-planner`: run minimal targeted validation for H1/H2/H3 changes and summarize residual risk.
+
+Two of these (`documentation-writer`, `hypothesis-test-planner`) are adapted from common skill patterns listed on Skills.sh, but constrained to this repository's experiment structure.
 
 ### Hypothesis 1 — Memory Flywheel
 
