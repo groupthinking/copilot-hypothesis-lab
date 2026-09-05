@@ -43,7 +43,6 @@ interface PRData {
   body: string | null;
   merged_at: string | null;
   user: { login: string };
-  head: { sha: string };
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -109,10 +108,10 @@ function buildLessonBlock(
   whatWorked: string[],
   convention: string
 ): string {
-  const noFailures = whatFailed.length === 0 || whatFailed[0] === "";
-  const failedSection = noFailures
-    ? `WHAT_FAILED: none`
-    : [`WHAT_FAILED: |`, ...whatFailed.map((l) => `  - ${l}`)].join("\n");
+  const failedLines =
+    whatFailed.length === 0 || whatFailed[0] === ""
+      ? "  none"
+      : whatFailed.map((l) => `  - ${l}`).join("\n");
 
   const workedLines =
     whatWorked.length === 0
@@ -124,7 +123,8 @@ function buildLessonBlock(
     `PR: #${prNumber}`,
     `DATE: ${date}`,
     `OUTCOME: ${outcome}`,
-    failedSection,
+    `WHAT_FAILED: |`,
+    failedLines,
     `WHAT_WORKED: |`,
     workedLines,
     `CONVENTION: |`,
@@ -156,7 +156,6 @@ async function main(): Promise<void> {
       body: null,
       merged_at: new Date().toISOString(),
       user: { login: args.author ?? "dry-run-user" },
-      head: { sha: "0000000000000000000000000000000000000000" },
     };
     reviews = [];
     checkRuns = [];
@@ -172,7 +171,7 @@ async function main(): Promise<void> {
     );
 
     const checksResponse = await githubRequest<{ check_runs: CheckRun[] }>(
-      `/repos/${owner}/${repoName}/commits/${prData.head.sha}/check-runs`,
+      `/repos/${owner}/${repoName}/commits/${prData.merged_at ? "HEAD" : "HEAD"}/check-runs`,
       token
     );
     checkRuns = checksResponse.check_runs ?? [];

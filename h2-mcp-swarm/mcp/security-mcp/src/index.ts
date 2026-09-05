@@ -78,7 +78,7 @@ function runSemgrep(files: string[]): Finding[] {
     // Use spawnSync with a separate args array to prevent command injection
     const result = child_process.spawnSync(
       "semgrep",
-      ["--json", "--config=auto", "--", ...files],
+      ["--json", "--config=auto", ...files],
       { cwd: REPO_ROOT, timeout: 120000 }
     );
     const output = result.stdout ? result.stdout.toString() : "";
