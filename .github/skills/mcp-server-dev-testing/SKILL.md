@@ -16,7 +16,7 @@ This repository contains three specialized TypeScript MCP servers:
 1. Navigate to the target MCP server directory (`h2-mcp-swarm/mcp/<server-name>`).
 2. Run installation and build checks:
    ```bash
-   npm install && npm run build
+   npm ci && npm run build
    ```
 3. Test tool registration and JSON-RPC protocol compliance:
    - Verify tool schema definitions in `src/index.ts`.

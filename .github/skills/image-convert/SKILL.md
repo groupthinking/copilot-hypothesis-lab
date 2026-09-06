@@ -1,7 +1,6 @@
 ---
 name: image-convert
 description: Converts SVG diagrams, context-density charts, and experiment architecture plots to PNG images for copilot-hypothesis-lab and linked groupthinking/.agent-orchestrator work. Use when asked to convert SVG files or export visual artifacts.
-allowed-tools: shell
 license: MIT
 ---
 
@@ -23,10 +22,10 @@ This skill is configured specifically for `groupthinking/copilot-hypothesis-lab`
 
 Convert a single SVG file:
 ```bash
-.github/skills/image-convert/convert-svg-to-png.sh h3-spaces-density/analysis/density_curve.svg
+.github/skills/image-convert/convert-svg-to-png.sh path/to/generated-density-curve.svg
 ```
 
 Convert an SVG file specifying custom PNG path:
 ```bash
-.github/skills/image-convert/convert-svg-to-png.sh h2-mcp-swarm/architecture.svg h2-mcp-swarm/architecture.png
+.github/skills/image-convert/convert-svg-to-png.sh path/to/generated-architecture.svg path/to/output/architecture.png
 ```

@@ -15,6 +15,8 @@ if [ ! -f "$INPUT_SVG" ]; then
   exit 1
 fi
 
+mkdir -p "$(dirname "$OUTPUT_PNG")"
+
 echo "Converting '$INPUT_SVG' to '$OUTPUT_PNG'..."
 npx --yes resvg-cli "$INPUT_SVG" "$OUTPUT_PNG"
 echo "Successfully converted '$INPUT_SVG' to '$OUTPUT_PNG'."
