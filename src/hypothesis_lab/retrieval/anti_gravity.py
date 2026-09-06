@@ -38,6 +38,8 @@ class AntiGravityLayer:
     ) -> None:
         if not 0.0 <= anti_gravity_strength <= 1.0:
             raise ValueError("anti_gravity_strength must be between 0.0 and 1.0")
+        if entropy_scale < 0.0:
+            raise ValueError("entropy_scale must be non-negative")
         self.history_vectors: list[list[float]] = history_vectors or []
         if self.history_vectors:
             expected_dim = len(self.history_vectors[0])
@@ -63,7 +65,7 @@ class AntiGravityLayer:
         """
         similarity = self._max_history_similarity(document)
         # Invert: low similarity → high novelty
-        return (1.0 - similarity) * self.anti_gravity_strength
+        return (1.0 - max(0.0, min(1.0, similarity))) * self.anti_gravity_strength
 
     def diversity_rerank(
         self,

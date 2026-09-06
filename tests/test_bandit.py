@@ -44,6 +44,10 @@ class TestEpsilonGreedyBandit:
         with pytest.raises(ValueError, match="min_epsilon"):
             EpsilonGreedyBandit(arms=["a"], min_epsilon=1.1)
 
+    def test_min_epsilon_cannot_exceed_epsilon(self) -> None:
+        with pytest.raises(ValueError, match="cannot exceed"):
+            EpsilonGreedyBandit(arms=["a"], epsilon=0.05, min_epsilon=0.5)
+
     def test_select_returns_valid_arm(self) -> None:
         bandit = EpsilonGreedyBandit(arms=["a", "b", "c"], seed=42)
         for _ in range(20):
@@ -74,7 +78,7 @@ class TestEpsilonGreedyBandit:
         )
         for _ in range(100):
             bandit.update("a", reward=1.0)
-        assert bandit.epsilon >= 0.01
+        assert bandit.epsilon == pytest.approx(0.01)
 
     def test_exploitation_selects_best_arm(self) -> None:
         # With epsilon=0 it always exploits
