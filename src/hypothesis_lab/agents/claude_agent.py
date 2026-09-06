@@ -30,6 +30,21 @@ try:
 except ImportError:
     _SDK_AVAILABLE = False
 
+    class AssistantMessage:
+        """Fallback type when the Claude Agent SDK is unavailable."""
+
+    class ClaudeAgentOptions:
+        """Fallback type when the Claude Agent SDK is unavailable."""
+
+    class TextBlock:
+        """Fallback type when the Claude Agent SDK is unavailable."""
+
+    def query(*args: Any, **kwargs: Any) -> Any:
+        raise RuntimeError(
+            "Claude Agent SDK is not installed. "
+            "Run: pip install hypothesis-lab[claude]"
+        )
+
 
 _SYSTEM_PROMPT = """\
 You are a hypothesis-lab research agent specialising in AI retrieval systems.
