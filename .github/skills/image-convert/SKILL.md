@@ -23,10 +23,10 @@ This skill is configured specifically for `groupthinking/copilot-hypothesis-lab`
 
 Convert a single SVG file:
 ```bash
-.github/skills/image-convert/convert-svg-to-png.sh h3-spaces-density/analysis/density_curve.svg
+.github/skills/image-convert/convert-svg-to-png.sh path/to/generated-density-curve.svg
 ```
 
 Convert an SVG file specifying custom PNG path:
 ```bash
-.github/skills/image-convert/convert-svg-to-png.sh h2-mcp-swarm/architecture.svg h2-mcp-swarm/architecture.png
+.github/skills/image-convert/convert-svg-to-png.sh path/to/generated-architecture.svg path/to/output/architecture.png
 ```
