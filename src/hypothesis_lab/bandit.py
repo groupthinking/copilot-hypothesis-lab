@@ -99,8 +99,9 @@ class EpsilonGreedyBandit:
             stats.successes += 1
         else:
             stats.failures += 1
-        # Decay epsilon toward minimum
-        self.epsilon = max(self.min_epsilon, self.epsilon * self.epsilon_decay)
+        # Decay epsilon toward minimum without increasing it when already below the floor
+        if self.epsilon > self.min_epsilon:
+            self.epsilon = max(self.min_epsilon, self.epsilon * self.epsilon_decay)
 
     @property
     def exploration_ratio(self) -> float:
@@ -150,7 +151,8 @@ class ThompsonSamplingBandit:
         # Use the relation between Beta and Gamma distributions
         x = self._rng.gammavariate(alpha, 1.0)
         y = self._rng.gammavariate(beta, 1.0)
-        return x / (x + y)
+        total = x + y
+        return x / total if total else 0.5
 
     def select(self) -> str:
         """Select an arm by Thompson Sampling."""

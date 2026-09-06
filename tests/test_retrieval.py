@@ -185,8 +185,8 @@ class TestRetrievalEngine:
         results = engine.retrieve(docs)
         # With gravity strategy all novelty scores should be 0
         for r in results:
-            if r.strategy == "gravity":
-                assert r.novelty_score == 0.0
+            assert r.strategy == "gravity"
+            assert r.novelty_score == 0.0
 
     def test_feedback_updates_state(self) -> None:
         engine = RetrievalEngine([1.0, 0.0], seed=42)
