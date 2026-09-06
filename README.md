@@ -24,11 +24,12 @@ copilot-hypothesis-lab/
 │   ├── agents/
 │   │   └── memory-writer.skill.md        # H1 agent skill
 │   ├── skills/
-│   │   ├── github-actions-failure-debugging/
-│   │   ├── documentation-writer/
-│   │   ├── hypothesis-test-planner/
-│   │   ├── code-review/
-│   │   └── experiment-issue-triage/      # Project Copilot skills
+│   │   ├── github-actions-failure-debugging/ # Debug failing CI workflows
+│   │   ├── image-convert/                # Convert SVG charts & diagrams to PNG
+│   │   ├── mcp-server-dev-testing/       # Build & test TS MCP servers
+│   │   ├── context-density-evaluator/    # Evaluate context density & metrics
+│   │   ├── documentation-writer/         # Keep benchmark docs updated
+│   │   └── hypothesis-test-planner/      # Minimal targeted experiment validation
 │   └── copilot/
 │       └── custom-agents/
 │           ├── memory-reader.agent.md    # H1 custom agent
@@ -79,14 +80,15 @@ See [HYPOTHESES.md](HYPOTHESES.md) for full pre-registered specification.
 
 ### Copilot Skills In This Repo
 
-Project skills are in `.github/skills/`:
-- `github-actions-failure-debugging`: triage workflow failures using Actions run + job logs, then report `past performance`, `current gaps/errors`, and `next steps planned` for linked `.agent-orchestrator` work.
+Project skills are located in `.github/skills/`:
+- `github-actions-failure-debugging`: triage workflow failures using Actions run + job logs, then report `past performance`, `current gaps/errors`, and `next steps planned` for linked `groupthinking/.agent-orchestrator` work items.
+- `image-convert`: convert SVG diagrams, context-density charts, and architecture plots to PNG using `convert-svg-to-png.sh` for this repo and `groupthinking/.agent-orchestrator`.
+- `mcp-server-dev-testing`: build, verify, and property-test TS MCP servers (`spec-mcp`, `test-mcp`, `security-mcp`) in `h2-mcp-swarm/mcp/`.
+- `context-density-evaluator`: evaluate context-density manifests, sweep raw output logs, and notebook curves for H3 and H1 falsification thresholds.
 - `documentation-writer`: keep benchmark docs accurate and hypothesis-consistent when editing README/spec/results content.
 - `hypothesis-test-planner`: run minimal targeted validation for H1/H2/H3 changes and summarize residual risk.
-- `code-review`: focus Copilot code review on experiment correctness, workflow safety, MCP behavior, and linked `.agent-orchestrator` handoff quality.
-- `experiment-issue-triage`: classify lab issues into H1/H2/H3/project automation work, preserve existing labels, and prepare compact orchestrator handoffs.
 
-These skills adapt common Skills.sh patterns (workflow debugging, documentation, testing, code review, and issue triage) to this repository's experiment structure and the connected `groupthinking/.agent-orchestrator` workflow.
+Skills such as `documentation-writer`, `hypothesis-test-planner`, `mcp-server-dev-testing`, and `context-density-evaluator` adapt common skill patterns from Skills.sh to this repository's experiment structure and connected task orchestrator `groupthinking/.agent-orchestrator`.
 
 ### Hypothesis 1 — Memory Flywheel
 

@@ -1,10 +1,10 @@
 ---
 name: github-actions-failure-debugging
-description: Debug failing GitHub Actions workflows for copilot-hypothesis-lab and report status to linked .agent-orchestrator work items.
+description: Debug failing GitHub Actions workflows for copilot-hypothesis-lab and linked groupthinking/.agent-orchestrator work. Use when asked to debug failing GitHub Actions workflows or CI runs.
 license: MIT
 ---
 
-Use this skill when asked to investigate CI, workflow, build, or test failures.
+Use this skill when asked to investigate CI, workflow, build, or test failures in `groupthinking/copilot-hypothesis-lab` or connected work items in `groupthinking/.agent-orchestrator`.
 
 This repository has multiple experiment workflows. Prioritize these when triaging:
 - `.github/workflows/project-flow-automation.yml`
@@ -16,7 +16,7 @@ This repository has multiple experiment workflows. Prioritize these when triagin
 
 ## Workflow
 
-1. List recent runs with `actions_list` (`list_workflow_runs`) for `groupthinking/copilot-hypothesis-lab`.
+1. List recent runs with `list_workflow_runs` for `groupthinking/copilot-hypothesis-lab`.
 2. Filter to the relevant branch, pull request, or workflow file.
 3. Pull failure details with `get_job_logs`:
    - First use `run_id` + `failed_only=true`
@@ -41,4 +41,3 @@ Use this short template:
 - Current gaps/errors: <summary>
 - Next steps planned: <summary>
 ```
-
