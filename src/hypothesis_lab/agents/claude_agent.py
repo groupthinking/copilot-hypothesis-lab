@@ -19,25 +19,31 @@ from hypothesis_lab.retrieval.engine import RetrievalResult
 
 # Soft dependency — SDK is optional
 try:
-    from claude_agent_sdk import (  # type: ignore[import-untyped]
-        AssistantMessage,
-        ClaudeAgentOptions,
-        TextBlock,
-        query,
+    from claude_agent_sdk import (
+        AssistantMessage as _AssistantMessage,  # type: ignore[import-untyped]
     )
+    from claude_agent_sdk import (
+        ClaudeAgentOptions as _ClaudeAgentOptions,  # type: ignore[import-untyped]
+    )
+    from claude_agent_sdk import TextBlock as _TextBlock  # type: ignore[import-untyped]
+    from claude_agent_sdk import query  # type: ignore[import-untyped]
 
     _SDK_AVAILABLE = True
 except ImportError:
     _SDK_AVAILABLE = False
 
-    class AssistantMessage:
+    class _FallbackAssistantMessage:
         """Fallback type when the Claude Agent SDK is unavailable."""
 
-    class ClaudeAgentOptions:
+    class _FallbackClaudeAgentOptions:
         """Fallback type when the Claude Agent SDK is unavailable."""
 
-    class TextBlock:
+    class _FallbackTextBlock:
         """Fallback type when the Claude Agent SDK is unavailable."""
+
+    _AssistantMessage = _FallbackAssistantMessage
+    _ClaudeAgentOptions = _FallbackClaudeAgentOptions
+    _TextBlock = _FallbackTextBlock
 
     def query(*args: Any, **kwargs: Any) -> Any:
         raise RuntimeError(
@@ -104,16 +110,16 @@ class ClaudeHypothesisAgent:
         if context:
             prompt += f"\n\nContext: {context}"
 
-        options = ClaudeAgentOptions(
+        options = _ClaudeAgentOptions(
             system_prompt=self.system_prompt,
             max_turns=self.max_turns,
         )
 
         response_parts: list[str] = []
         async for message in query(prompt=prompt, options=options):
-            if isinstance(message, AssistantMessage):
+            if isinstance(message, _AssistantMessage):
                 for block in message.content:
-                    if isinstance(block, TextBlock):
+                    if isinstance(block, _TextBlock):
                         response_parts.append(block.text)
 
         return AgentMessage(
@@ -139,16 +145,16 @@ class ClaudeHypothesisAgent:
             f"{bandit_summary}"
         )
 
-        options = ClaudeAgentOptions(
+        options = _ClaudeAgentOptions(
             system_prompt=self.system_prompt,
             max_turns=self.max_turns,
         )
 
         response_parts: list[str] = []
         async for message in query(prompt=prompt, options=options):
-            if isinstance(message, AssistantMessage):
+            if isinstance(message, _AssistantMessage):
                 for block in message.content:
-                    if isinstance(block, TextBlock):
+                    if isinstance(block, _TextBlock):
                         response_parts.append(block.text)
 
         return AgentMessage(
