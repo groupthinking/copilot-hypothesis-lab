@@ -1,0 +1,38 @@
+name: PR Telemetry Ingestion
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  record-telemetry:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Parse and Append PR Telemetry
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels) }}
+          PR_MERGED: ${{ github.event.pull_request.merged }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 src/hypothesis_lab/telemetry.py
+
+      - name: Commit Metric Event
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add metrics/history.jsonl
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(metrics): log PR #${{ github.event.pull_request.number }} event [skip ci]"
+            git push
+          fi
