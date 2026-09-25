@@ -1,0 +1,11 @@
+{
+  "h1": {
+    "total_prs": 0,
+    "treatment_count": 0,
+    "control_count": 0,
+    "treatment_rate": 0.0,
+    "control_rate": 0.0,
+    "delta": 0.0,
+    "status": "Pending"
+  }
+}
