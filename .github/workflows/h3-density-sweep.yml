@@ -137,6 +137,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # read the branch head that includes the matrix jobs' sweep commits, not the triggering SHA
+          ref: ${{ github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -162,4 +165,9 @@ jobs:
           git add h3-spaces-density/analysis/density_curve.ipynb
           git diff --staged --quiet || \
             git commit -m "chore(h3): update density_curve notebook output [skip ci]"
-          git push
+          pushed=0
+          for i in 1 2 3; do
+            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push; then pushed=1; break; fi
+            sleep $((i * 5))
+          done
+          [ "$pushed" = 1 ] || { echo "push failed after 3 attempts"; exit 1; }
