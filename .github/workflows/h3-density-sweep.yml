@@ -119,7 +119,13 @@ jobs:
           git add h3-spaces-density/analysis/raw/
           git diff --staged --quiet || \
             git commit -m "chore(h3): density sweep results for space=${{ matrix.space }} [skip ci]"
-          git push
+          # 6 matrix jobs push to the same branch at once; rebase and retry instead of failing non-fast-forward
+          pushed=0
+          for i in 1 2 3 4 5; do
+            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push; then pushed=1; break; fi
+            sleep $((RANDOM % 10 + i * 3))
+          done
+          [ "$pushed" = 1 ] || { echo "push failed after 5 attempts"; exit 1; }
 
   update-notebook:
     name: Update analysis notebook
@@ -131,6 +137,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # read the branch head that includes the matrix jobs' sweep commits, not the triggering SHA
+          ref: ${{ github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -156,4 +165,9 @@ jobs:
           git add h3-spaces-density/analysis/density_curve.ipynb
           git diff --staged --quiet || \
             git commit -m "chore(h3): update density_curve notebook output [skip ci]"
-          git push
+          pushed=0
+          for i in 1 2 3; do
+            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push; then pushed=1; break; fi
+            sleep $((i * 5))
+          done
+          [ "$pushed" = 1 ] || { echo "push failed after 3 attempts"; exit 1; }

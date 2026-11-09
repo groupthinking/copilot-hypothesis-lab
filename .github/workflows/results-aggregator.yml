@@ -17,11 +17,14 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install package (src layout)
+        run: pip install -e .
+
       - name: Compute Results & Markdown
         run: |
           python3 -c "
           import os, json
-          from src.hypothesis_lab.aggregate import calculate_stats, update_results_md
+          from hypothesis_lab.aggregate import calculate_stats, update_results_md
           os.makedirs('metrics/raw', exist_ok=True)
           stats = calculate_stats()
           with open('metrics/raw/latest.json', 'w') as f:
