@@ -1,0 +1,67 @@
+[
+  {
+    "space": "2k",
+    "trial": 1,
+    "timestamp": "2026-11-23T02:13:58.908480Z",
+    "status": "scheduled",
+    "metrics": {
+      "tests_pass": null,
+      "lint_clean": null,
+      "review_approval": null,
+      "human_score": null,
+      "composite_quality": null
+    }
+  },
+  {
+    "space": "2k",
+    "trial": 2,
+    "timestamp": "2026-11-23T02:13:58.908491Z",
+    "status": "scheduled",
+    "metrics": {
+      "tests_pass": null,
+      "lint_clean": null,
+      "review_approval": null,
+      "human_score": null,
+      "composite_quality": null
+    }
+  },
+  {
+    "space": "2k",
+    "trial": 3,
+    "timestamp": "2026-11-23T02:13:58.908493Z",
+    "status": "scheduled",
+    "metrics": {
+      "tests_pass": null,
+      "lint_clean": null,
+      "review_approval": null,
+      "human_score": null,
+      "composite_quality": null
+    }
+  },
+  {
+    "space": "2k",
+    "trial": 4,
+    "timestamp": "2026-11-23T02:13:58.908495Z",
+    "status": "scheduled",
+    "metrics": {
+      "tests_pass": null,
+      "lint_clean": null,
+      "review_approval": null,
+      "human_score": null,
+      "composite_quality": null
+    }
+  },
+  {
+    "space": "2k",
+    "trial": 5,
+    "timestamp": "2026-11-23T02:13:58.908497Z",
+    "status": "scheduled",
+    "metrics": {
+      "tests_pass": null,
+      "lint_clean": null,
+      "review_approval": null,
+      "human_score": null,
+      "composite_quality": null
+    }
+  }
+]
